@@ -10,111 +10,175 @@ datasource db {
     directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 }
 
-//создание таблицы юзера
 model User {
-    //при создание id это число Int уникальное@default и его id будет увеличиваться на 1 autoincrement()
     id Int @id @default(autoincrement())
 
     fullName String
-    // @unique уникальный email
-    email    String @unique
+    email    String    @unique
     password String
+    role     UserRole  @default(USER)
+    verified DateTime?
 
-    cart Cart[]
+    provider   String?
+    providerId String?
 
-    //когда был создан пользователь и конкретное время 
+    cart             Cart?
+    orders           Order[]
+    verificationCode VerificationCode?
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
 
-//модель продукта
+model Category {
+    id       Int       @id @default(autoincrement())
+    name     String    @unique
+    products Product[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
 model Product {
-    id       Int    @id @default(autoincrement())
+    id Int @id @default(autoincrement())
+
     name     String
     imageUrl String
 
-    //подтверждение связи @relation(fields: [categoryId], references: [id] и цепляемся в id категории
+    ingredients Ingredient[]
+    items       ProductItem[]
+
     category   Category @relation(fields: [categoryId], references: [id])
-    //привязываемся в id категории 
     categoryId Int
-
-    //связь с ингредиентами 
-    ingredient Ingredient[]
-
-    items ProductItem[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
 
 model ProductItem {
-    id        Int  @id @default(autoincrement())
+    id Int @id @default(autoincrement())
+
     price     Int
-    //? опциональное свойство
     size      Int?
     pizzaType Int?
 
-    product   Product    @relation(fields: [productId], references: [id])
-    productId Int
-    cartItem  CartItem[]
-}
+    cartItems CartItem[]
 
-model Category {
-    id       Int       @id @default(autoincrement())
-    name     String    @unique
-    //созданите связи
-    products Product[]
+    product   Product @relation(fields: [productId], references: [id])
+    productId Int
 }
 
 model Ingredient {
     id Int @id @default(autoincrement())
 
-    product Product[]
-    cartItem  CartItem[]
-
     name     String
     price    Int
     imageUrl String
 
-    createdAt DateTime   @default(now())
-    updatedAt DateTime   @updatedAt
+    products  Product[]
+    cartItems CartItem[]
 
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model Cart {
     id Int @id @default(autoincrement())
 
     user   User? @relation(fields: [userId], references: [id])
-    userId Int?
+    userId Int?  @unique
 
-    toket String
+    items CartItem[]
+
+    token String
 
     totalAmount Int @default(0)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
-
-    cartItem CartItem[]
 }
 
 model CartItem {
     id Int @id @default(autoincrement())
 
+    cart   Cart @relation(fields: [cartId], references: [id])
+    cartId Int
+
     productItem   ProductItem @relation(fields: [productItemId], references: [id])
     productItemId Int
 
-    cart   Cart @relation(fields: [CartId], references: [id])
-    CartId Int
+    quantity Int @default(1)
 
     ingredients Ingredient[]
-  
-    quantity Int
-
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
 
-model Order{
+model Order {
     id Int @id @default(autoincrement())
+
+    user   User? @relation(fields: [userId], references: [id])
+    userId Int?
+
+    token String
+
+    totalAmount Int
+    status      OrderStatus
+    paymentId   String?
+
+    items Json
+
+    fullName String
+    email    String
+    phone    String
+    address  String
+    comment  String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model VerificationCode {
+    id Int @id @default(autoincrement())
+
+    user   User @relation(fields: [userId], references: [id])
+    userId Int  @unique
+
+    code String
+
+    createdAt DateTime @default(now())
+
+    @@unique([userId, code])
+}
+
+model Story {
+    id              Int    @id @default(autoincrement())
+    previewImageUrl String
+
+    items StoryItem[]
+
+    createdAt DateTime @default(now())
+}
+
+model StoryItem {
+    id Int @id @default(autoincrement())
+
+    storyId Int
+    story   Story @relation(fields: [storyId], references: [id])
+
+    sourceUrl String
+
+    createdAt DateTime @default(now())
+}
+
+enum OrderStatus {
+    PENDING
+    SUCCEEDED
+    CANCELLED
+}
+
+enum UserRole {
+    USER
+    ADMIN
 }
