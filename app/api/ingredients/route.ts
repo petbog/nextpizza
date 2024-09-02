@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
 
     //достаем данные с призмы
-    const ingredients = await prisma.ingredient.findMany()
+    const ingredients = await prisma.ingredients.findMany()
 
     //отдаем данные через NextResponse в формате json
     return NextResponse.json(ingredients)
