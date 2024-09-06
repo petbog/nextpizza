@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { FilterCheckbox, FilterCheckboxProps } from './filter-checkbox';
-import { Input } from '../ui';
+import { Input, Skeleton } from '../ui';
 
 type Item = FilterCheckboxProps
 
@@ -10,11 +10,14 @@ interface checkboxFiltersGroupProps {
     title: string,
     className?: string,
     items: Item[],
-    defaultItems: Item[],
+    defaultItems?: Item[],
     limit?: number,
+    loading?: boolean
     searchInputPlasecholder?: string,
-    onChange?: (values: string[]) => void,
-    defaultValues?: string
+    onClickCheckbox?: (id: string) => void,
+    defaultValues?: string,
+    selected?: Set<string>,
+    name?:string
 }
 
 export const CheckboxFiltersGroup: React.FC<checkboxFiltersGroupProps> = ({
@@ -24,8 +27,11 @@ export const CheckboxFiltersGroup: React.FC<checkboxFiltersGroupProps> = ({
     limit = 5,
     searchInputPlasecholder = 'Поиск...',
     className,
-    onChange,
-    defaultItems
+    onClickCheckbox,
+    defaultItems,
+    loading,
+    selected,
+    name
 
 }) => {
 
@@ -39,9 +45,20 @@ export const CheckboxFiltersGroup: React.FC<checkboxFiltersGroupProps> = ({
 
 
 
-    const list = showAll ? items.filter((item) => item.text.toLowerCase().includes(searhValue.toLocaleLowerCase()) ) : defaultItems?.slice(0, limit)
+    const list = showAll ? items.filter((item) => item.text.toLowerCase().includes(searhValue.toLocaleLowerCase())) : (defaultItems || items)?.slice(0, limit)
 
-
+    if (loading) {
+        return <div className="">
+            <p className="font-bold mb-3">{title}</p>
+            {
+                ...Array(limit).fill(0).map((_, index) => (
+                    <>
+                        <Skeleton key={index} className='h-6 mb-3 rounded-sm-[8px]' />
+                    </>
+                ))
+            }
+        </div>
+    }
 
     return (
         <div className={cn('', className)}>
@@ -59,8 +76,9 @@ export const CheckboxFiltersGroup: React.FC<checkboxFiltersGroupProps> = ({
                             text={item.text}
                             value={item.value}
                             endAdornment={item.endAdornment}
-                            checked={false}
-                            onCheckedChange={(ids) => console.log(ids)}
+                            checked={selected?.has(item.value)}
+                            onCheckedChange={() => onClickCheckbox?.(item.value)}
+                            name={name}
                         />
                     ))
                 }

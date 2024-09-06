@@ -6,7 +6,7 @@ import { Product } from '@prisma/client';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useRef, useState } from 'react';
-import { useClickAway } from 'react-use';
+import { useClickAway, useDebounce } from 'react-use';
 
 
 interface SearchInputProps {
@@ -26,11 +26,25 @@ export const SearchInput: React.FC<SearchInputProps> = ({ className }) => {
 
 
 
-  useEffect(() => {
-    Api.products.search(searchQuery).then(items => {
+  useDebounce(async () => {
+    try {
+      await Api.products.search(searchQuery).then(items => {
       setProducts(items)
     })
-  }, [searchQuery])
+    } catch (error) {
+      console.warn(error)
+    }
+  },
+    250,
+    [searchQuery])
+
+
+
+  const onClickItem = () => {
+    setFocused(false)
+    setSarchQuery('')
+    setProducts([])
+  }
 
   return (
     <>
@@ -45,7 +59,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({ className }) => {
           value={searchQuery}
           onChange={(e) => setSarchQuery(e.target.value)}
         />
-        <div
+        {products.length > 0 && <div
           className={cn(
             'absolute w-full bg-white rounded-xl py-2 top-14 shadow-md transition-all duration-200 invisible opacity-0 z-30',
             focused && 'visible opacity-100 top-12',
@@ -55,16 +69,17 @@ export const SearchInput: React.FC<SearchInputProps> = ({ className }) => {
             products.map((product) => (
               <Link
                 key={product.id}
+                onClick={onClickItem}
                 className=" flex items-center gap-3 px-3 py-2 hover:bg-primary/10 "
-                href={`/producе/${product.id}`}>
-                <img className={cn('rounded-sm h-8 w-8', className)} src={product.imageUrl } alt={product.name}/>
+                href={`/product/${product.id}`}>
+                <img className={cn('rounded-sm h-8 w-8', className)} src={product.imageUrl} alt={product.name} />
                 <div>
                   {product.name}
                 </div>
               </Link>
             ))
           }
-        </div>
+        </div>}
 
       </div>
     </>
