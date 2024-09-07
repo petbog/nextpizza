@@ -2,12 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Title } from './title';
-import { FilterCheckbox } from './filter-checkbox';
 import { Input } from '../ui';
 import { RangeSlider } from './range-slider';
 import { CheckboxFiltersGroup } from './checkbox-filters-group';
 import { useIngredients } from '@/hooks/use-filter';
 import { useSet } from 'react-use';
+import qs from 'qs'
+import { useRouter, useSearchParams } from 'next/navigation';
 
 
 
@@ -16,16 +17,30 @@ interface Props {
 }
 
 interface PriceProps {
-    priceFrom: number,
-    priceTo: number
+    priceFrom?: number,
+    priceTo?: number
+}
+
+interface QueryFilters extends PriceProps {
+    pizzaTypes: string,
+    sizes: string,
+    ingredients: string
 }
 
 export const Filters: React.FC<Props> = ({ className }) => {
+    const searchParams = useSearchParams() as unknown as Map<keyof QueryFilters, string>
+    const router = useRouter()
+    const { ingredients, loading, onAddId, selectedIngredients } = useIngredients(searchParams.get('ingredients')?.split(','))
 
-    const { ingredients, loading, onAddId, selectedIngredients } = useIngredients()
-    const [prices, setPrice] = useState<PriceProps>({ priceFrom: 0, priceTo: 1000 })
-    const [sizes, { toggle: toggleSizes }] = useSet(new Set<string>([]))
-    const [pizzaTypes, { toggle: togglePizzaTypes }] = useSet(new Set<string>([]))
+
+    const [prices, setPrice] = useState<PriceProps>({
+        priceFrom: Number(searchParams.get('priceFrom')) || undefined,
+        priceTo: Number(searchParams.get('priceTo')) || undefined,
+    })
+    const [sizes, { toggle: toggleSizes }] = useSet(new Set<string>(searchParams.get('sizes') ? searchParams.get('sizes')?.split(',') : []))
+
+
+    const [pizzaTypes, { toggle: togglePizzaTypes }] = useSet(new Set<string>(searchParams.get('pizzaTypes') ? searchParams.get('pizzaTypes')?.split(',') : []))
 
     const items = ingredients.map((item) => ({ value: String(item.id), text: item.name }))
 
@@ -38,9 +53,20 @@ export const Filters: React.FC<Props> = ({ className }) => {
         )
     }
 
+    console.log(searchParams, 999)
     useEffect(() => {
-        console.log({ prices, sizes, pizzaTypes, selectedIngredients })
-    }, [prices, sizes, pizzaTypes, selectedIngredients])
+        const filters = {
+            ...prices,
+            pizzaTypes: Array.from(pizzaTypes),
+            sizes: Array.from(sizes),
+            ingredients: Array.from(selectedIngredients)
+        }
+
+        const query = qs.stringify(filters, { arrayFormat: 'comma' })
+        router.push(`?${query}`, {
+            scroll: false
+        })
+    }, [router, prices, sizes, pizzaTypes, selectedIngredients])
 
     return (
         <div className={cn('', className)}>
@@ -83,8 +109,8 @@ export const Filters: React.FC<Props> = ({ className }) => {
                 </div>
 
                 <RangeSlider min={0} max={1000} step={10} value={[
-                    prices.priceFrom,
-                    prices.priceTo
+                    prices.priceFrom || 0,
+                    prices.priceTo || 1000
                 ]}
                     onValueChange={([priceFrom, priceTo]) => setPrice({ priceFrom, priceTo })}
                 />
@@ -105,13 +131,6 @@ export const Filters: React.FC<Props> = ({ className }) => {
                 selected={selectedIngredients}
             />
 
-            {/* нижние чекбоксы */}
-
-            <Title text='Тип теста' size='sm' className='mb-5 font-bold mt-4' />
-            <div className="flex flex-col gap-4 ">
-                <FilterCheckbox text='Традиционное' value='1' />
-                <FilterCheckbox text='Тонкое' value='2' />
-            </div>
         </div>
     );
 };
