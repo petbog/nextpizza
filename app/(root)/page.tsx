@@ -1,5 +1,6 @@
-import { Container, Filters, ProductsGroupList, Title, TopBar } from "@/components/shared";
+
 import { prisma } from "@/prisma/prisma-client";
+import { Container, Filters, ProductsGroupList, Title, TopBar } from "@/shared/components/shared";
 
 
 
