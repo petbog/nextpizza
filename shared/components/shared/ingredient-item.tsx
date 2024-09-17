@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/alt-text */
-
 import { cn } from '@/shared/lib/utils';
 import { CircleCheck } from 'lucide-react';
 import React from 'react';
