@@ -49,10 +49,6 @@ export const ChooseProductForm: React.FC<Props> = ({
         <div className="flex flex-col gap-4 mt-5">
         </div>
 
-        {/* <div className="bg-gray-50 p-5 rounded-md h-[420px] overflow-auto scrollbar mt-5">
-          <div className="grid grid-cols-3 gap-3">
-          </div>
-        </div> */}
 
         <Button
 
