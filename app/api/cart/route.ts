@@ -3,22 +3,18 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     try {
-        const userId = 1
         const token = req.cookies.get('cartToken')?.value
 
-        // if (!token) {
-        //     return NextResponse.json({ items: [] })
-        // }
+        if (!token) {
+            return NextResponse.json({ totalAmount: 0, items: [] })
+        }
 
         const userCart = await prisma.cart.findFirst({
             where: {
                 OR: [
                     {
-                        userId
-                    },
-                    // {
-                    //     token
-                    // }
+                        token
+                    }
                 ]
             },
             include: {
@@ -32,7 +28,7 @@ export async function GET(req: NextRequest) {
                                 product: true
                             }
                         },
-                        ingredients:true
+                        ingredients: true
                     }
                 }
             }
